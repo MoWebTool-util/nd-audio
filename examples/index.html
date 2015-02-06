@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="zh-cn">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Demo</title>
+</head>
+
+<body>
+  <div id="container">
+    <!-- CONTENT HERE -->
+    <div class="demo">
+      <p>
+        <label>
+          mp3地址：
+          <input type="text" id="song_src" value="./babaqunali.mp3"/>(网络地址也可以)
+        </label>
+        加载进度：<span id="song_loaded">0</span>
+        播放进度：<span id="song_played">0</span>
+      </p>
+      <p>
+        <label>
+          预加载<input type="checkbox" id="song_preload" value="true" checked="checked"/>
+        </label>
+
+        <label>
+          自动播放<input type="checkbox" id="song_autoplay" value="true" checked="checked"/>
+        </label>
+
+        <label>
+          循环播放<input type="checkbox" id="song_loop" value="true" checked="checked"/>
+        </label>
+      </p>
+      <p>
+        <button id="song_load">加载</button>
+        <button id="song_play">播放</button>
+        <button id="song_pause">暂停</button>
+        <button id="song_stop">停止</button>
+        <button id="song_skip">跳转到</button><input type="text" id="percent" value="50" class="span1"/>%
+      </p>
+
+      <div id="log_area" style="width: 500px; height: 400px; border: 1px solid #ddd; padding: 3px; overflow: auto;"></div>
+    </div>
+  </div>
+
+  <script src="seajs/sea.js"></script>
+  <script src="config.js"></script>
+  <script src="./jquery.min.js"></script>
+  <script>
+  seajs.use(['index'], function(Audio) {
+    'use strict';
+//console.log($('#log_area').length);
+    var log = function(text, type) {
+      $('#log_area')[type || 'append']('<p>' + text + '</p>');
+    };
+
+    var setting = function (obj, config) {
+      obj.preload = config.preload;
+      obj.autoplay = config.autoplay;
+      obj.loop = config.loop;
+      return obj;
+    };
+
+    var getConfig = function () {
+      return {
+        preload: $('#song_preload')[0].checked,
+        autoplay: $('#song_autoplay')[0].checked,
+        loop: $('#song_loop')[0].checked
+      };
+    };
+
+    var a1 = new Audio($.extend({
+    }, (function(obj) {
+      if(obj.preload || obj.autoplay) {
+        obj.src = $('#song_src').val();
+      }
+      return obj;
+    })({
+      preload: $('#song_preload')[0].checked,
+      autoplay: $('#song_autoplay')[0].checked,
+      loop: $('#song_loop')[0].checked
+    })));
+
+    // 事件
+    a1.on('loadStart',function () { // 开始加载事件
+      log('开始加载：' + this.get('src'), 'html');
+    }).on('progress',function (loaded, total) { // 加载进度事件
+      $('#song_loaded').text((loaded / total * 100).toFixed(2) + '%');
+    }).on('loaded',function () { // 加载完成事件
+      log('加载完成！')
+    }).on('play',function () { // 播放事件
+      log('开始播放');
+    }).on('timeupdate',function (played, total) { // 播放进度事件
+      $('#song_played').text((played / total * 100).toFixed(2) + '%');
+    }).on('pause',function () { // 暂停事件
+      log('暂停');
+    }).on('ended',function () { // 结束事件
+      log('结束<br/>-----------------------------------------');
+    }).on('skip', function (percent) { // 跳转事件
+      log('跳到：' + percent);
+    }).on('error', function () { // 异常事件
+      log('载入异常');
+    });
+
+    $('#song_load').click(function () {
+      setting(a1, getConfig);
+      a1.load($('#song_src').val());
+    });
+
+    $('#song_play').click(function () {
+      a1.play();
+    });
+    $('#song_pause').click(function () {
+      a1.pause();
+    });
+    $('#song_stop').click(function () {
+      a1.end();
+    });
+    $('#song_skip').click(function () {
+      a1.skipTo(parseFloat($('#percent').val()) || 0);
+    });
+  });
+  </script>
+</body>
+
+</html>
